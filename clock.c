@@ -114,8 +114,7 @@ void start_counter()
     /* Get cycle counter */
     cyc_hi = 0;
     cyc_lo = counter();
-}
-
+} 
 double get_counter()
 {
     unsigned ncyc_hi, ncyc_lo;
