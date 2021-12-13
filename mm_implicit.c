@@ -52,9 +52,8 @@ team_t team = {
 #define HDRP(bp) ((char *)(bp)-WSIZE)
 #define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE)
 /* Given block ptr bp, compute address of next and previous blocks */
-#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp)-WSIZE)))/* 포인터 bp를 이용 다음블록의 주소를 얻는다 */
-#define PREV_BLKP(bp) ((char *)(bp)-GET_SIZE(((char *)(bp)-DSIZE)))/* 포인터 bp를 이용 이전 블록의 주소를 얻는다. */
-
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp)-WSIZE))) /* 포인터 bp를 이용 다음블록의 주소를 얻는다 */
+#define PREV_BLKP(bp) ((char *)(bp)-GET_SIZE(((char *)(bp)-DSIZE)))   /* 포인터 bp를 이용 이전 블록의 주소를 얻는다. */
 
 static void *extend_heap(size_t words);
 static void *find_fit(size_t asize);
@@ -167,7 +166,7 @@ static void *find_fit(size_t asize)
 
     // next-fit
     void *bp;
-     for (bp = prev_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    for (bp = prev_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
     {
         if (!GET_ALLOC(HDRP(bp)) && GET_SIZE(HDRP(bp)) >= asize)
         {
@@ -205,7 +204,6 @@ static void place(void *bp, size_t asize)
     }
 }
 
-
 static void *extend_heap(size_t words)
 /* 힙의 크기를 확장하는 함수 */
 {
@@ -231,7 +229,7 @@ static void *coalesce(void *bp)
     /* 다음 블록이 할당외어있는지 아닌지 다음 블럭의 HDRP 를 확인한다. */
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
-    
+
     if (prev_alloc && next_alloc)
     { /* Case 1  = 이전블럭의 하위 다음블럭의 헤어가 둘다 할당되어있다면? 현재 bp블록이 free list의 첫 시작이된다.*/
         prev_listp = bp;
