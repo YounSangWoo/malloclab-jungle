@@ -58,7 +58,7 @@ static void *coalesce(void *bp);
 static void mm_insert(void *bp);
 static void mm_remove(void *bp);
 
-//Initialize the heap in this block by making the prologue epilogue and providing extra padding.Also the prologue has space for prev/next and an empty padding since minimum block size is 24 which is max(min all block size, min free block size)
+/*  Initialize the heap  */
 int mm_init(void)
 {
     if ((heap_listp = mem_sbrk(2 * OVERHEAD)) == NULL)
@@ -67,21 +67,22 @@ int mm_init(void)
     }
 
     PUT(heap_listp, 0);
-    PUT(heap_listp + WSIZE, PACK(OVERHEAD, 1));
-    PUT(heap_listp + (2 + WSIZE), 0);
-    PUT(heap_listp + (3 + WSIZE), 0);
-    PUT(heap_listp + (4 + WSIZE), PACK(OVERHEAD, 1));
-    PUT(heap_listp + (5 + WSIZE), PACK(0, 1));
+    PUT(heap_listp + WSIZE, PACK(OVERHEAD, 1));//프롤로그 헤더
+    PUT(heap_listp + (2 + WSIZE), 0);//PREV_FREEP를 위한 주소 저장공간
+    PUT(heap_listp + (3 + WSIZE), 0);//NEXT_FREEP를 위한 주소 저장공간
+    PUT(heap_listp + (4 + WSIZE), PACK(OVERHEAD, 1));//프롤로그푸터
+    PUT(heap_listp + (5 + WSIZE), PACK(0, 1));//에필로그헤더
     head = heap_listp + DSIZE;
- 
-    if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
+
+    if (extend_heap(CHUNKSIZE / WSIZE) == NULL) 
+    //초기 가용메모리 공간 확보
     {
         return -1;
-    } 
+    }
 
     return 0;
 }
-//Here the bp is given to the user if he requests for space in heap.Also here the size allignment issue is taken care of by considering min block size and padding issues
+//Here the bp is given to the user if he requests for space in heap.
 void *mm_malloc(size_t size)
 {
     size_t asize;
@@ -124,7 +125,7 @@ void mm_free(void *bp)
 
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
-    coalesce(bp);
+    coalesce(bp);//반환된 메모리는 최대 공간 확보를 위해 coalesce함수에서 가용리스트 끼리 합쳐줍니다.
 }
 
 void *mm_realloc(void *ptr, size_t size)
@@ -159,7 +160,7 @@ static void *extend_heap(size_t words)
         return NULL;
     }
 
-    PUT(HDRP(bp), PACK(size, 0));
+    PUT(HDRP(bp), PACK(size, 0)); 
     PUT(FTRP(bp), PACK(size, 0));
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));
 
@@ -173,15 +174,15 @@ static void *coalesce(void *bp)
     size_t size = GET_SIZE(HDRP(bp));
 
     if (previous_alloc && !next__alloc)
-    {
-        size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+    { /* 앞 할당 뒤 free인 경우*/
+            size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         mm_remove(NEXT_BLKP(bp));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
 
     else if (!previous_alloc && next__alloc)
-    {
+    { /* 앞 free 뒤 할당 인 경우 */
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         bp = PREV_BLKP(bp);
         mm_remove(bp);
@@ -190,7 +191,7 @@ static void *coalesce(void *bp)
     }
 
     else if (!previous_alloc && !next__alloc)
-    {
+    { /*  앞 뒤 모두 free의 경우 */
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
         mm_remove(PREV_BLKP(bp));
         mm_remove(NEXT_BLKP(bp));
